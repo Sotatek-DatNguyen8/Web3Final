@@ -1,0 +1,14 @@
+type ExampleEntity @entity {
+  id: ID!
+  count: BigInt!
+  user: Bytes! # address
+  amount: BigInt! # uint256
+}
+
+type HistoryEntity @entity {
+  id: ID! # hash transaction - NEED_FOR_FRONTEND (transaction)
+  user: Bytes! # msg.sender (transaction.from)
+  eventName: String! # name of event => lay tu (ten event)
+  amount: BigInt! # value - NEED_FOR_FRONTEND (param)
+  transactionTime: BigInt! # time transaction created (transaction)
+}

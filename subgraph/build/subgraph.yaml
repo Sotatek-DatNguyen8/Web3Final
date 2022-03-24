@@ -1,0 +1,33 @@
+specVersion: 0.0.2
+schema:
+  file: schema.graphql
+dataSources:
+  - kind: ethereum
+    name: MasterChef
+    network: rinkeby
+    source:
+      address: "0x9da687e88b0A807e57f1913bCD31D56c49C872c2"
+      abi: MasterChef
+      startBlock: 9309957
+    mapping:
+      kind: ethereum/events
+      apiVersion: 0.0.5
+      language: wasm/assemblyscript
+      entities:
+        - Deposit
+        - EmergencyWithdraw
+        - OwnershipTransferred
+        - Withdraw
+      abis:
+        - name: MasterChef
+          file: MasterChef/abis/MasterChef.json
+      eventHandlers:
+        - event: Deposit(indexed address,uint256)
+          handler: handleDeposit
+        - event: EmergencyWithdraw(indexed address,uint256)
+          handler: handleEmergencyWithdraw
+        - event: OwnershipTransferred(indexed address,indexed address)
+          handler: handleOwnershipTransferred
+        - event: Withdraw(indexed address,uint256)
+          handler: handleWithdraw
+      file: MasterChef/MasterChef.wasm
