@@ -28,7 +28,6 @@ import DD2Abi from "../../ABI/DD2.json";
 import MasterChefAbi from "../../ABI/MasterChef.json";
 import WETHAbi from "../../ABI/WETH.json";
 import {
-  getContractDD2,
   getContractMasterChef,
   getContractMulticall,
   getContractWETH,
@@ -107,35 +106,6 @@ const Home = (props) => {
     showMessage("ERROR", content);
   };
 
-  const getBalanceWETH = async () => {
-    const WETHContract = getContractWETH(library);
-    const balance = await WETHContract.balanceOf(account);
-    return balance;
-  };
-
-  const getPendingDD2 = async () => {
-    const masterChefContract = getContractMasterChef(library);
-    const pendding = await masterChefContract.pendingDD2(account);
-    return pendding;
-  };
-  const getBalanceDD2 = async () => {
-    const DD2Contract = getContractDD2(library);
-    const balance = await DD2Contract.balanceOf(account);
-    return balance;
-  };
-  const getTotalWETH = async () => {
-    const WETHContract = getContractWETH(library);
-    const balance = await WETHContract.totalSupply();
-    return balance;
-  };
-
-  const getStatusApprove = async () => {
-    const WETHContract = getContractWETH(library);
-    const allowance = await WETHContract.allowance(account, SC_MasterChef);
-    return allowance;
-    // setIsApprove()
-  };
-
   const renderAccount = () => {
     return account ? account.slice(0, 6) + "..." + account.slice(-4) : "";
   };
@@ -144,11 +114,12 @@ const Home = (props) => {
   const stateUpdate = harvesting && approving && staking && withdrawing;
 
   const getDataInfo = async () => {
-    if (library) {
+    if (library && account) {
       const multicallContract = getContractMulticall(library);
       let iFaceWETH = new ethers.utils.Interface(WETHAbi);
       let iFaceDD2 = new ethers.utils.Interface(DD2Abi);
       let iFaceMasterChef = new ethers.utils.Interface(MasterChefAbi);
+
       const callDatas = [
         {
           target: SC_WETH,
@@ -164,7 +135,7 @@ const Home = (props) => {
         },
         {
           target: SC_WETH,
-          callData: iFaceWETH.encodeFunctionData("totalSupply", [account]),
+          callData: iFaceWETH.encodeFunctionData("totalSupply", []),
         },
         {
           target: SC_WETH,
@@ -175,31 +146,37 @@ const Home = (props) => {
         },
       ];
 
-      // const multiResults = await multicallContract.aggregate(callDatas)
-      //   .returnData;
-      // let decodedResults = [];
-      // decodedResults.push(
-      //   iFaceWETH.decodeFunctionResult("balanceOf", multiResults[0])
-      // );
-      // decodedResults.push(
-      //   iFaceMasterChef.decodeFunctionResult("pendingDD2", multiResults[1])
-      // );
-      // decodedResults.push(
-      //   iFaceDD2.decodeFunctionResult("balanceOf", multiResults[2])
-      // );
-      // decodedResults.push(
-      //   iFaceWETH.decodeFunctionResult("totalSupply", multiResults[3])
-      // );
-      // decodedResults.push(
-      //   iFaceWETH.decodeFunctionResult("allowance", multiResults[4])
-      // );
-      console.log(callDatas);
+      const multiResults = await multicallContract.aggregate(callDatas);
+      // .returnData;
+      // ?.returnData
+      let decodedResults = [];
+      if (multiResults) {
+        const _multiResults = multiResults.returnData;
+        decodedResults.push(
+          iFaceWETH.decodeFunctionResult("balanceOf", _multiResults[0])
+        );
+        decodedResults.push(
+          iFaceMasterChef.decodeFunctionResult("pendingDD2", _multiResults[1])
+        );
+        decodedResults.push(
+          iFaceDD2.decodeFunctionResult("balanceOf", _multiResults[2])
+        );
+        decodedResults.push(
+          iFaceWETH.decodeFunctionResult("totalSupply", _multiResults[3])
+        );
+        decodedResults.push(
+          iFaceWETH.decodeFunctionResult("allowance", _multiResults[4])
+        );
+      }
 
-      // return decodedResults;
+      setBalanceWETH(decodedResults[0][0]);
+      setPeddingDD2(decodedResults[1][0]);
+      setBalanceDD2(decodedResults[2][0]);
+      setTotalWETH(decodedResults[3][0]);
+      // console.log(res[4]);
+      setIsApprove(decodedResults[4][0] !== clearBigNumber);
     }
   };
-
-  // getDataInfo();
 
   useEffect(() => {
     (async function () {
@@ -210,20 +187,7 @@ const Home = (props) => {
         // Or updated
         stateUpdate
       ) {
-        Promise.all([
-          getPendingDD2(),
-          getBalanceDD2(),
-          getTotalWETH(),
-          getBalanceWETH(),
-          getStatusApprove(),
-        ]).then((res) => {
-          setPeddingDD2(res[0]);
-          setBalanceDD2(res[1]);
-          setTotalWETH(res[2]);
-          setBalanceWETH(res[3]);
-          // console.log(res[4]);
-          setIsApprove(res[4] !== clearBigNumber);
-        });
+        getDataInfo();
       }
       if (!account) {
         setPeddingDD2(clearBigNumber);
@@ -239,7 +203,7 @@ const Home = (props) => {
     try {
       const response = await handleFetchData();
 
-      setListHistory(response.data.historyEntities);
+      setListHistory(response?.data.historyEntities);
     } catch (e) {
       console.log(e);
     }
@@ -475,7 +439,7 @@ const Home = (props) => {
             </ListGroup>
             {listHistory && listHistory.length ? (
               listHistory.map((h) => (
-                <ListGroup className="mt-3" horizontal>
+                <ListGroup className="mt-3" horizontal key={h.id}>
                   <ListGroupItem action>{h.eventName}</ListGroupItem>
                   <ListGroupItem action>
                     {formatAmount.format(formatEther(h.amount))}
