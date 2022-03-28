@@ -68,6 +68,7 @@ const Home = (props) => {
   const [pendingDD2, setPeddingDD2] = useState(clearBigNumber);
   const [balanceDD2, setBalanceDD2] = useState(clearBigNumber);
   const [totalWETH, setTotalWETH] = useState(clearBigNumber);
+  const [yourStake, setYourStake] = useState(clearBigNumber);
 
   //Loading
   const [harvesting, setHarvesting] = useState(false);
@@ -144,6 +145,10 @@ const Home = (props) => {
             SC_MasterChef,
           ]),
         },
+        {
+          target: SC_MasterChef,
+          callData: iFaceMasterChef.encodeFunctionData("userInfo", [account]),
+        },
       ];
 
       const multiResults = await multicallContract.aggregate(callDatas);
@@ -167,6 +172,9 @@ const Home = (props) => {
         decodedResults.push(
           iFaceWETH.decodeFunctionResult("allowance", _multiResults[4])
         );
+        decodedResults.push(
+          iFaceMasterChef.decodeFunctionResult("userInfo", _multiResults[5])
+        );
       }
 
       setBalanceWETH(decodedResults[0][0]);
@@ -174,7 +182,9 @@ const Home = (props) => {
       setBalanceDD2(decodedResults[2][0]);
       setTotalWETH(decodedResults[3][0]);
       // console.log(res[4]);
-      setIsApprove(decodedResults[4][0] !== clearBigNumber);
+      setIsApprove(decodedResults[4][0].toString() !== "0");
+      // console.log(decodedResults[5]);
+      setYourStake(decodedResults[5].amount);
     }
   };
 
@@ -194,6 +204,7 @@ const Home = (props) => {
         setBalanceDD2(clearBigNumber);
         setTotalWETH(clearBigNumber);
         setBalanceWETH(clearBigNumber);
+        setYourStake(clearBigNumber);
       }
     })();
     /* eslint-disable react-hooks/exhaustive-deps */
@@ -268,8 +279,8 @@ const Home = (props) => {
   };
 
   const onSubmitStake = async (value) => {
-    console.log(value, balanceWETH);
-    if (value <= balanceWETH.toString()) {
+    console.log(value, formatEther(balanceWETH));
+    if (value <= formatEther(balanceWETH)) {
       // UI
       setStaking(true);
       setShowStake(false);
@@ -290,8 +301,8 @@ const Home = (props) => {
     }
   };
   const onSubmitWithdraw = async (value) => {
-    console.log(value, balanceDD2.toString());
-    if (value <= balanceDD2.toString()) {
+    console.log(value, formatEther(balanceDD2));
+    if (value <= formatEther(balanceDD2)) {
       // UI
       setWithdrawing(true);
       setShowWithdraw(false);
@@ -410,7 +421,7 @@ const Home = (props) => {
             <ListGroupItem action>Your stake</ListGroupItem>
             <ListGroupItem action>
               {/* {`${balanceDD2} Token`} */}
-              {`${formatEther(balanceDD2)} DD2`}
+              {`${formatEther(yourStake)} WETH`}
             </ListGroupItem>
           </ListGroup>
           <ListGroup className="mt-3" horizontal>

@@ -5,7 +5,7 @@ import { WalletConnectConnector } from "@web3-react/walletconnect-connector";
 export const injected = new InjectedConnector({ supportedChainIds: [4] });
 export const walletConnect = new WalletConnectConnector({
   rpc: {
-    4: "https://rinkeby.infura.io/v3/c9f9eba874a24d339db4c886f6964321",
+    4: "https://rinkeby.infura.io/v3/edc067050c394f3e889be5490129706b",
   },
   qrcode: true,
 });
