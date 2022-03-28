@@ -279,48 +279,51 @@ const Home = (props) => {
   };
 
   const onSubmitStake = async (value) => {
-    console.log(value, formatEther(balanceWETH));
-    if (value <= formatEther(balanceWETH)) {
-      // UI
-      setStaking(true);
-      setShowStake(false);
-      // Call
-      const masterChefContract = getContractMasterChef(library);
-
-      masterChefContract
-        .deposit(parseUnits(value, 18))
-        .then(async (res) => {
-          await res.wait();
-          showMessageSuccess("Stake success !");
-          setStaking(false);
-        })
-        .catch((err) => {
-          showMessageError(err.stack);
-          setStaking(false);
-        });
+    if (value > formatEther(balanceWETH)) {
+      showMessageError("Invalid value!");
+      return;
     }
+
+    // UI
+    setStaking(true);
+    setShowStake(false);
+    // Call
+    const masterChefContract = getContractMasterChef(library);
+
+    masterChefContract
+      .deposit(parseUnits(value, 18))
+      .then(async (res) => {
+        await res.wait();
+        showMessageSuccess("Stake success !");
+        setStaking(false);
+      })
+      .catch((err) => {
+        showMessageError(err.stack);
+        setStaking(false);
+      });
   };
   const onSubmitWithdraw = async (value) => {
-    console.log(value, formatEther(balanceDD2));
-    if (value <= formatEther(balanceDD2)) {
-      // UI
-      setWithdrawing(true);
-      setShowWithdraw(false);
-      // Call
-      const masterChefContract = getContractMasterChef(library);
-
-      masterChefContract
-        .withdraw(parseUnits(value, 18))
-        .then(async (res) => {
-          await res.wait();
-          showMessageSuccess("Withdraw WETH success !");
-          setWithdrawing(false);
-        })
-        .catch((err) => {
-          showMessageError(err.stack);
-          setWithdrawing(false);
-        });
+    if (value > formatEther(yourStake)) {
+      showMessageError("Invalid value!");
+      return;
     }
+    // UI
+    setWithdrawing(true);
+    setShowWithdraw(false);
+    // Call
+    const masterChefContract = getContractMasterChef(library);
+
+    masterChefContract
+      .withdraw(parseUnits(value, 18))
+      .then(async (res) => {
+        await res.wait();
+        showMessageSuccess("Withdraw WETH success !");
+        setWithdrawing(false);
+      })
+      .catch((err) => {
+        showMessageError(err.stack);
+        setWithdrawing(false);
+      });
   };
 
   return (
